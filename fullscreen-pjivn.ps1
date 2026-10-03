@@ -5,9 +5,9 @@ if($PlanOnly){if([math]::Abs($Width/$Height-16/9) -gt 0.001){throw 'Target displ
 $config=Read-HelperConfig $ConfigPath
 $stateRoot=Initialize-StateDirectory
 Add-Type -AssemblyName UIAutomationClient,System.Windows.Forms
-if(-not ('IventaitoNative' -as [type])){Add-Type @'
+if(-not ('PjivnNative' -as [type])){Add-Type @'
 using System;using System.Runtime.InteropServices;
-public class IventaitoNative {
+public class PjivnNative {
  [StructLayout(LayoutKind.Sequential)]public struct POINT{public int x,y;}
  [StructLayout(LayoutKind.Sequential)]public struct RECT{public int left,top,right,bottom;}
  [StructLayout(LayoutKind.Sequential)]public struct PLACEMENT{public int length,flags,showCmd;public POINT min,max;public RECT normal;}
@@ -35,23 +35,23 @@ $statePath=Join-Path $stateRoot 'fullscreen-state.json'
 if($Restore -and $windows.Count -eq 0){return}
 if($windows.Count -ne 1){throw 'Expected exactly one dedicated game window.'}
 $hwnd=[IntPtr]$windows[0].Current.NativeWindowHandle;$process=Get-Process -Id $windows[0].Current.ProcessId
-$mutex=New-Object System.Threading.Mutex($false,'Local\IventaitoFullscreenLauncher')
+$mutex=New-Object System.Threading.Mutex($false,'Local\PjivnFullscreenLauncher')
 if(-not $mutex.WaitOne(0)){$mutex.Dispose();throw 'Another fullscreen operation is running.'}
 function Get-GameWindow{[System.Windows.Automation.AutomationElement]::FromHandle($hwnd)}
-function Focus-Game{if((Get-GameWindow).Current.Name -notin $allowedTitles -or (Get-GameWindow).Current.ProcessId -ne $process.Id -or (Get-Process -Id $process.Id).StartTime.Ticks -ne $process.StartTime.Ticks){throw 'Window identity changed.'};for($i=0;$i -lt 5;$i++){if([IventaitoNative]::Focus($hwnd)){return};Start-Sleep -Milliseconds 200};throw 'Cannot focus exact game window.'}
+function Focus-Game{if((Get-GameWindow).Current.Name -notin $allowedTitles -or (Get-GameWindow).Current.ProcessId -ne $process.Id -or (Get-Process -Id $process.Id).StartTime.Ticks -ne $process.StartTime.Ticks){throw 'Window identity changed.'};for($i=0;$i -lt 5;$i++){if([PjivnNative]::Focus($hwnd)){return};Start-Sleep -Milliseconds 200};throw 'Cannot focus exact game window.'}
 function Toggle-Fullscreen{
 
  Focus-Game
  if(Test-Fullscreen){
-  $p=New-Object IventaitoNative+POINT;[void][IventaitoNative]::GetCursorPos([ref]$p)
+  $p=New-Object PjivnNative+POINT;[void][PjivnNative]::GetCursorPos([ref]$p)
   $b=[System.Windows.Forms.Screen]::FromHandle($hwnd).Bounds;$x=$b.X+[int]($b.Width/2);$y=$b.Y+1
   try{
-   [void][IventaitoNative]::SetCursorPos($x,$y);Start-Sleep -Milliseconds 750
+   [void][PjivnNative]::SetCursorPos($x,$y);Start-Sleep -Milliseconds 750
    $prefix=([char[]]@(0x5168,0x753b,0x9762)) -join ''
    $buttons=@((Get-GameWindow).FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition) | Where-Object {$_.Current.ControlType -eq [System.Windows.Automation.ControlType]::Button -and $_.Current.Name.StartsWith($prefix) -and -not $_.Current.IsOffscreen})
    if($buttons.Count -ne 1){throw 'Chrome fullscreen exit button unavailable.'}
    ([System.Windows.Automation.InvokePattern]$buttons[0].GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
-  }finally{$cursor=New-Object IventaitoNative+POINT;[void][IventaitoNative]::GetCursorPos([ref]$cursor);if($cursor.x -eq $x -and $cursor.y -eq $y){[void][IventaitoNative]::SetCursorPos($p.x,$p.y)}}
+  }finally{$cursor=New-Object PjivnNative+POINT;[void][PjivnNative]::GetCursorPos([ref]$cursor);if($cursor.x -eq $x -and $cursor.y -eq $y){[void][PjivnNative]::SetCursorPos($p.x,$p.y)}}
  }else{
 
   $w=Get-GameWindow;$all=$w.FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition)
@@ -71,8 +71,8 @@ function Test-MonitorBounds($r,$b){
 function Test-Fullscreen{
  # Chrome document accessibility bounds can use CSS pixels after scaling.
  # Compare the native top-level window and monitor in the same coordinate space.
- $r=New-Object IventaitoNative+RECT
- if(-not [IventaitoNative]::GetWindowRect($hwnd,[ref]$r)){throw 'Cannot read game window bounds.'}
+ $r=New-Object PjivnNative+RECT
+ if(-not [PjivnNative]::GetWindowRect($hwnd,[ref]$r)){throw 'Cannot read game window bounds.'}
  $b=[System.Windows.Forms.Screen]::FromHandle($hwnd).Bounds
  if(-not (Test-MonitorBounds $r $b)){return $false}
  $menus=@((Get-GameWindow).FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition) | Where-Object {$_.Current.AutomationId -eq 'view_1007' -and -not $_.Current.IsOffscreen})
@@ -81,7 +81,7 @@ function Test-Fullscreen{
 function Apply-Snapshot($saved){
  Focus-Game;if(Test-Fullscreen){Toggle-Fullscreen}
  $p=$saved.placement
- if(-not [IventaitoNative]::RestorePlacement($hwnd,[int]$p.flags,[int]$p.showCmd,[int]$p.normal.left,[int]$p.normal.top,[int]$p.normal.right,[int]$p.normal.bottom,[int]$p.min.x,[int]$p.min.y,[int]$p.max.x,[int]$p.max.y)){throw 'Placement restoration failed.'}
+ if(-not [PjivnNative]::RestorePlacement($hwnd,[int]$p.flags,[int]$p.showCmd,[int]$p.normal.left,[int]$p.normal.top,[int]$p.normal.right,[int]$p.normal.bottom,[int]$p.min.x,[int]$p.min.y,[int]$p.max.x,[int]$p.max.y)){throw 'Placement restoration failed.'}
  Start-Sleep -Milliseconds 300;if($saved.fullscreen){Toggle-Fullscreen}
 }
 try{
@@ -93,7 +93,7 @@ try{
  if($config -match '(?m)^\s*output_name\s*=\s*\S+'){throw 'Explicit Sunshine display selection requires review.'}
  $screen=[System.Windows.Forms.Screen]::PrimaryScreen
  if([math]::Abs($screen.Bounds.Width/$screen.Bounds.Height-16/9) -gt 0.001){throw 'Default capture display must be 16:9.'}
- if($null -eq $saved){$p=New-Object IventaitoNative+PLACEMENT;$p.length=[Runtime.InteropServices.Marshal]::SizeOf($p);if(-not [IventaitoNative]::GetWindowPlacement($hwnd,[ref]$p)){throw 'Cannot save placement.'};$saved=[pscustomobject]@{handle=$hwnd.ToInt64();pid=$process.Id;processStartTicks=$process.StartTime.Ticks;fullscreen=(Test-Fullscreen);placement=$p;active=$true;method='responsive-css-chrome-menu'};$saved | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $statePath}
+ if($null -eq $saved){$p=New-Object PjivnNative+PLACEMENT;$p.length=[Runtime.InteropServices.Marshal]::SizeOf($p);if(-not [PjivnNative]::GetWindowPlacement($hwnd,[ref]$p)){throw 'Cannot save placement.'};$saved=[pscustomobject]@{handle=$hwnd.ToInt64();pid=$process.Id;processStartTicks=$process.StartTime.Ticks;fullscreen=(Test-Fullscreen);placement=$p;active=$true;method='responsive-css-chrome-menu'};$saved | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $statePath}
  try{
 
   $isFull=(Test-Fullscreen) -and [System.Windows.Forms.Screen]::FromHandle($hwnd).DeviceName -eq $screen.DeviceName
@@ -101,7 +101,7 @@ try{
    if(Test-Fullscreen){Toggle-Fullscreen}
    ([System.Windows.Automation.WindowPattern](Get-GameWindow).GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern)).SetWindowVisualState([System.Windows.Automation.WindowVisualState]::Normal)
    $r=(Get-GameWindow).Current.BoundingRectangle
-   if(-not [IventaitoNative]::SetWindowPos($hwnd,[IntPtr]::Zero,$screen.Bounds.X+100,$screen.Bounds.Y+100,[int]$r.Width,[int]$r.Height,0x4)){throw 'Cannot move game to capture display.'}
+   if(-not [PjivnNative]::SetWindowPos($hwnd,[IntPtr]::Zero,$screen.Bounds.X+100,$screen.Bounds.Y+100,[int]$r.Width,[int]$r.Height,0x4)){throw 'Cannot move game to capture display.'}
    Start-Sleep -Milliseconds 300;Toggle-Fullscreen
   }
   Focus-Game

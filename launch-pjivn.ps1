@@ -4,10 +4,10 @@ $ErrorActionPreference = 'Stop'
 $config=Read-HelperConfig $ConfigPath
 $stateRoot=Initialize-StateDirectory
 Add-Type -AssemblyName UIAutomationClient
-if(-not ('IventaitoWindow' -as [type])) { Add-Type @'
+if(-not ('PjivnWindow' -as [type])) { Add-Type @'
 using System;
 using System.Runtime.InteropServices;
-public class IventaitoWindow {
+public class PjivnWindow {
  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hwnd);
  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd,IntPtr pid);
@@ -69,7 +69,7 @@ $targets = @(Get-GameWindows)
 $statePath = Join-Path $stateRoot 'window-state.json'
 if ($Restore) {
  if(Test-Path -LiteralPath (Join-Path $stateRoot 'fullscreen-state.json')) {
-  & (Join-Path $PSScriptRoot 'fullscreen-iventaito.ps1') -ConfigPath $ConfigPath -Restore
+  & (Join-Path $PSScriptRoot 'fullscreen-pjivn.ps1') -ConfigPath $ConfigPath -Restore
  }
  if ($targets.Count -eq 1 -and (Test-Path -LiteralPath $statePath)) {
   $target=$targets[0]
@@ -87,7 +87,7 @@ if ($targets.Count -gt 1) { throw 'More than one dedicated game window; refusing
 $openedViaDemado=$false
 if ($targets.Count -eq 0 -or $VerifyDemadoLaunch) {
 
- $dashboardMutex=New-Object System.Threading.Mutex($false,'Local\IventaitoDemadoDashboard')
+ $dashboardMutex=New-Object System.Threading.Mutex($false,'Local\PjivnDemadoDashboard')
  if(-not $dashboardMutex.WaitOne(0)){$dashboardMutex.Dispose();throw 'A Demado launch is already running.'}
  $url=$null
  try {
@@ -113,7 +113,7 @@ if ($targets.Count -eq 0 -or $VerifyDemadoLaunch) {
     $allowedHelperHandle=$candidate.Current.NativeWindowHandle
    }
    $launchDiagnostic='matched target dashboard '+$candidate.Current.NativeWindowHandle
-   if(-not [IventaitoWindow]::Focus([IntPtr]$candidate.Current.NativeWindowHandle)){continue}
+   if(-not [PjivnWindow]::Focus([IntPtr]$candidate.Current.NativeWindowHandle)){continue}
    # Enumerating the local helper window also activates Chrome's lazy accessibility tree.
    $elements=$candidate.FindAll([System.Windows.Automation.TreeScope]::Descendants,[System.Windows.Automation.Condition]::TrueCondition)
    $doc=$elements | Where-Object {$_.Current.AutomationId -eq 'RootWebArea' -and $_.Current.Name -eq 'demado'} | Select-Object -First 1
@@ -167,7 +167,7 @@ if($null -eq $previous -or -not (Test-WindowIdentity $previous $target.Current.N
  @{ handle=$target.Current.NativeWindowHandle; pid=$target.Current.ProcessId; processStartTicks=(Get-Process -Id $target.Current.ProcessId).StartTime.Ticks; visualState=[int]$pattern.Current.WindowVisualState; active=$true } | ConvertTo-Json | Set-Content -LiteralPath $statePath
 }
 if ($Maximize) { $pattern.SetWindowVisualState([System.Windows.Automation.WindowVisualState]::Maximized) }
-if ($Fullscreen) { & (Join-Path $PSScriptRoot 'fullscreen-iventaito.ps1') -ConfigPath $ConfigPath }
-$focused = [IventaitoWindow]::Focus([IntPtr]$target.Current.NativeWindowHandle)
+if ($Fullscreen) { & (Join-Path $PSScriptRoot 'fullscreen-pjivn.ps1') -ConfigPath $ConfigPath }
+$focused = [PjivnWindow]::Focus([IntPtr]$target.Current.NativeWindowHandle)
 $message='Dedicated game ready. Demado launch invoked: '+$openedViaDemado+'. Foreground: '+$focused+'. Maximize requested: '+[bool]$Maximize+'. Handle: '+$target.Current.NativeWindowHandle
 Write-Output $message

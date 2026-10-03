@@ -13,20 +13,20 @@ main {
 }
 iframe#game_frame {
   --game-frame-width: 1280px !important;
-  --iventaito-scale: min(calc(100vw / 1280px), calc(100vh / 720px));
+  --pjivn-scale: min(calc(100vw / 1280px), calc(100vh / 720px));
   width: 1280px !important;
   min-width: 1280px !important;
   max-width: none !important;
   height: 1751px !important;
   position: fixed !important;
-  left: calc((100vw - 1280px * var(--iventaito-scale)) / 2) !important;
-  top: calc((100vh - 720px * var(--iventaito-scale)) / 2 - 60px * var(--iventaito-scale)) !important;
+  left: calc((100vw - 1280px * var(--pjivn-scale)) / 2) !important;
+  top: calc((100vh - 720px * var(--pjivn-scale)) / 2 - 60px * var(--pjivn-scale)) !important;
   right: auto !important;
   bottom: auto !important;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
-  transform: scale(var(--iventaito-scale)) !important;
+  transform: scale(var(--pjivn-scale)) !important;
   transform-origin: top left !important;
   z-index: 2147483647 !important;
   clip-path: inset(60px 0 971px 0) !important;

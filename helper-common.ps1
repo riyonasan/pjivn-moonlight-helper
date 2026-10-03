@@ -41,7 +41,7 @@ function Get-PrepCommands([string]$RepositoryPath,[string]$ConfigPath) {
  foreach($p in @($RepositoryPath,$ConfigPath)) {
   if($p -match '["\r\n]' -or -not [IO.Path]::IsPathRooted($p)){throw 'Command paths must be absolute and contain no quote or newline.'}
  }
- $script=Join-Path $RepositoryPath 'launch-iventaito.ps1'
+ $script=Join-Path $RepositoryPath 'launch-pjivn.ps1'
  $base='powershell.exe -NoProfile -ExecutionPolicy Bypass -File "'+$script+'" -ConfigPath "'+$ConfigPath+'"'
  [pscustomobject]@{do=$base+' -Fullscreen';undo=$base+' -Restore'}
 }

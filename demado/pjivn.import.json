@@ -1,0 +1,21 @@
+{
+  "version": "2.0.60",
+  "timestamp": 0,
+  "mados": [
+    {
+      "url": "https://play.games.dmm.co.jp/game/pjivn_293854",
+      "name": "イヴンタイト（ゲーム画面 1280×720）",
+      "addressbar": true,
+      "size": {
+        "width": 1280,
+        "height": 720
+      },
+      "offset": {
+        "left": 0,
+        "top": 0
+      },
+      "zoom": 1,
+      "stylesheet": "html, body {\n  margin: 0 !important;\n  padding: 0 !important;\n  overflow: hidden !important;\n  background: #000 !important;\n}\nmain {\n  --main-width: 1280px !important;\n  width: 1280px !important;\n  min-width: 1280px !important;\n  margin: 0 !important;\n  padding: 0 !important;\n}\niframe#game_frame {\n  --game-frame-width: 1280px !important;\n  --pjivn-scale: min(calc(100vw / 1280px), calc(100vh / 720px));\n  width: 1280px !important;\n  min-width: 1280px !important;\n  max-width: none !important;\n  height: 1751px !important;\n  position: fixed !important;\n  left: calc((100vw - 1280px * var(--pjivn-scale)) / 2) !important;\n  top: calc((100vh - 720px * var(--pjivn-scale)) / 2 - 60px * var(--pjivn-scale)) !important;\n  right: auto !important;\n  bottom: auto !important;\n  margin: 0 !important;\n  padding: 0 !important;\n  border: 0 !important;\n  transform: scale(var(--pjivn-scale)) !important;\n  transform-origin: top left !important;\n  z-index: 2147483647 !important;\n  clip-path: inset(60px 0 971px 0) !important;\n}\n"
+    }
+  ]
+}

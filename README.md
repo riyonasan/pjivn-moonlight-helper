@@ -1,4 +1,6 @@
-# iventaito-moonlight-helper
+# pjivn-moonlight-helper
+
+`pjivn`は対象ゲームURLの識別子から採った名前です。英語のゲーム名を仮定しません。
 
 イヴンタイトをDemadoの専用Chromeウィンドウで開き、Sunshine/Moonlightへ渡す小さな補助スクリプトです。動いた構成を置いておくためのリポジトリで、環境に合わせて設定やコードを調整する人向けです。インストーラーや公式サポートはありません。
 
@@ -16,12 +18,14 @@
 ## 初期設定
 
 1. Demadoの設定画面で、必要なら自分の既存設定を別の場所へエクスポートして保管します。
-2. `demado/iventaito.import.json`をDemadoの「インポート」から読み込み、1件の設定を確認して保存します。同じJSONを再度インポートすると別カードが増えるので、重複を避けてください。
-3. カード名は `イヴンタイト（ゲーム画面 1280×720）`、アドレスバーは有効、サイズは1280×720、ズームは1の想定です。JSONには16:9に合わせるCSSも入っています。編集用の同内容は`demado/iventaito.css`です。CSSファイル単独では自動反映されません。
+2. `demado/pjivn.import.json`をDemadoの「インポート」から読み込み、1件の設定を確認して保存します。同じJSONを再度インポートすると別カードが増えるので、重複を避けてください。
+3. カード名は `イヴンタイト（ゲーム画面 1280×720）`、アドレスバーは有効、サイズは1280×720、ズームは1の想定です。JSONには16:9に合わせるCSSも入っています。編集用の同内容は`demado/pjivn.css`です。CSSファイル単独では自動反映されません。
 4. 保存したカードの編集・エクスポート等へのリンクにあるIDを確認します。2.0.60ではエクスポート選択のURLの`?export=カードID`が手掛かりになります。複数選択のカンマ区切りではなく、このカード1件のIDを使ってください。インポートでIDが変わることはコードから確認しましたが、このJSONの実インポートは未検証です。
 5. `config.example.json`を`config.local.json`にコピーし、`CardId`を実際のIDへ置き換えます。`Name`はカード表示名と完全に一致させてください。起動はUI Automationで**同名カードが1件だけ**あることを確認して実行します。`CardId`は手動照合用で、UIのカードをIDで検索する実装ではありません。
 6. `Profile`をDemadoと本人のログインがあるChromeのディレクトリ名（`Default`、`Profile 1`など）にします。表示上のプロフィール名とは異なります。本人がChromeの`chrome://version`にあるプロファイルパスの末尾で確認できます。プロファイルの中身や認証データをコピーする必要はありません。
 7. `ChromePath`は空なら一般的なインストール先を検出します。必要なら`chrome.exe`の絶対パスを指定してください。`SunshineConfigPath`も実際の`sunshine.conf`の絶対パスへ調整します。
+
+設定キーと日本語カード名は命名変更前と同じです。自分で作成済みのローカル設定を使う場合は、新しい保存先へ置き、Sunshineに登録するコマンドを生成し直してください。
 
 ローカル設定と実行時の`.local/`はGit対象外です。設定変更前に配信を終了して復元し、このリポジトリは1ゲーム・1構成で使ってください。
 
@@ -30,16 +34,16 @@
 設定後、PowerShellで以下を実行すると、貼り付け用の`do` / `undo`コマンドがJSONで表示されます。Sunshine設定を自動更新する処理はありません。
 
 ```powershell
-& 'E:\development\iventaito-moonlight-helper\show-sunshine-commands.ps1'
+& 'E:\development\pjivn-moonlight-helper\show-sunshine-commands.ps1'
 ```
 
 標準配置の場合のコマンド例です（JSON表示の`\\`はJSONエスケープなので、値として読み取って貼り付けます）。
 
 ```text
 do:
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "E:\development\iventaito-moonlight-helper\launch-iventaito.ps1" -ConfigPath "E:\development\iventaito-moonlight-helper\config.local.json" -Fullscreen
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "E:\development\pjivn-moonlight-helper\launch-pjivn.ps1" -ConfigPath "E:\development\pjivn-moonlight-helper\config.local.json" -Fullscreen
 undo:
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "E:\development\iventaito-moonlight-helper\launch-iventaito.ps1" -ConfigPath "E:\development\iventaito-moonlight-helper\config.local.json" -Restore
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "E:\development\pjivn-moonlight-helper\launch-pjivn.ps1" -ConfigPath "E:\development\pjivn-moonlight-helper\config.local.json" -Restore
 ```
 
 SunshineのApplicationsに自分でアプリを追加し、Commandは空、Command Preparationsにこのdo/undoを1組登録します。管理者として実行する指定は不要です。実行ユーザーが本人のデスクトップとChromeプロファイルを利用できる必要があります。Moonlightの接続だけでなく、登録したアプリを選ぶことで準備コマンドを動かします。

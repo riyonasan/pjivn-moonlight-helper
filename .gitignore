@@ -1,0 +1,7 @@
+config.local.json
+*.local.json
+.local/
+*.log
+*.jsonl
+*.bak
+__pycache__/

@@ -1,0 +1,80 @@
+﻿$ErrorActionPreference='Stop'
+$root=Split-Path $PSScriptRoot -Parent
+. (Join-Path $root 'helper-common.ps1')
+function Assert($Condition,[string]$Message) {if(-not $Condition){throw $Message}}
+function Assert-Throws([scriptblock]$Action,[string]$Message) {
+ $thrown=$false
+ try {& $Action | Out-Null} catch {$thrown=$true}
+ Assert $thrown $Message
+}
+$asts=@{}
+foreach($file in Get-ChildItem -LiteralPath $root -Filter '*.ps1' -Recurse) {
+ $tokens=$null;$errors=$null
+ $ast=[System.Management.Automation.Language.Parser]::ParseFile($file.FullName,[ref]$tokens,[ref]$errors)
+ Assert ($errors.Count -eq 0) ($file.Name+': '+($errors.Message -join '; '))
+ $asts[$file.Name]=$ast
+}
+foreach($name in @('launch-iventaito.ps1','fullscreen-iventaito.ps1')) {
+ $native=$asts[$name].Find({param($node) $node -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $node.Value.Contains('public class Iventaito')},$true)
+ Assert ($null -ne $native) 'Native helper source not found.'
+ # Compile the declarations only; none of the Windows API methods are called.
+ Add-Type -TypeDefinition $native.Value
+}
+$import=Get-Content (Join-Path $root 'demado/iventaito.import.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$example=Get-Content (Join-Path $root 'config.example.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+Assert ($import.mados.Count -eq 1 -and $import.version -eq '2.0.60') 'Unexpected import envelope.'
+$card=$import.mados[0]
+Assert ($card.name -eq $example.Name -and $card.addressbar -and $card.zoom -eq 1) 'Import/config mismatch.'
+Assert ($card.size.width -eq 1280 -and $card.size.height -eq 720) 'Unexpected game size.'
+Assert (-not $card.PSObject.Properties['_id'] -and -not $card.PSObject.Properties['position']) 'Local ID or position leaked.'
+Assert ($card.stylesheet -ceq (Get-Content (Join-Path $root 'demado/iventaito.css') -Raw -Encoding UTF8)) 'CSS is out of sync.'
+$url='chrome-extension://'+$example.ExtensionId+'/index.html#dashboard'
+Assert ((Get-ChromeArguments 'Profile 1' $url) -ceq ('--profile-directory="Profile 1" --new-window "'+$url+'"')) 'Profile quoting failed.'
+Assert-Throws {Get-ChromeArguments 'Default" --bad' $url} 'Profile injection accepted.'
+Assert-Throws {Get-ChromeArguments 'Default' 'https://example.invalid'} 'Unexpected URL accepted.'
+$cmds=Get-PrepCommands 'C:\helper path' 'C:\helper path\settings.local.json'
+Assert ($cmds.do -ceq 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\helper path\launch-iventaito.ps1" -ConfigPath "C:\helper path\settings.local.json" -Fullscreen') 'do command quoting failed.'
+Assert ($cmds.undo -eq $cmds.do.Replace(' -Fullscreen',' -Restore')) 'undo command mismatch.'
+Assert-Throws {Get-PrepCommands 'C:\bad"path' 'C:\settings.json'} 'Unsafe command path accepted.'
+$saved=[pscustomobject]@{handle=42;pid=12;processStartTicks=12345678901234}
+Assert (Test-WindowIdentity $saved 42 12 12345678901234) 'Matching identity rejected.'
+Assert (-not (Test-WindowIdentity $saved 43 12 12345678901234)) 'Reused window handle accepted.'
+Assert (-not (Test-WindowIdentity $saved 42 13 12345678901234)) 'Different PID accepted.'
+Assert (-not (Test-WindowIdentity $saved 42 12 12345678901235)) 'Reused PID accepted.'
+Assert (-not (Test-WindowIdentity $null 42 12 12345678901234)) 'Missing state accepted.'
+$function=$asts['fullscreen-iventaito.ps1'].Find({param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Test-MonitorBounds'},$true)
+. ([scriptblock]::Create($function.Extent.Text))
+$bounds=[pscustomobject]@{Left=0;Top=0;Right=2560;Bottom=1440}
+Assert (Test-MonitorBounds ([pscustomobject]@{left=0;top=0;right=2560;bottom=1440}) $bounds) 'Fullscreen rejected.'
+Assert (-not (Test-MonitorBounds ([pscustomobject]@{left=0;top=0;right=1280;bottom=720}) $bounds)) 'CSS bounds accepted.'
+Assert (-not (Test-MonitorBounds ([pscustomobject]@{left=-8;top=-8;right=2568;bottom=1448}) $bounds)) 'Maximized frame accepted.'
+foreach($resolution in @(@(1280,720),@(1920,1080),@(2560,1440))) {
+ $plan=& (Join-Path $root 'fullscreen-iventaito.ps1') -PlanOnly -Width $resolution[0] -Height $resolution[1] | ConvertFrom-Json
+ Assert ($plan.CssScale -eq $resolution[0]/1280 -and -not $plan.ChangesDisplayResolution -and -not $plan.BrowserZoomChanged) 'Plan mismatch.'
+}
+Assert-Throws {& (Join-Path $root 'fullscreen-iventaito.ps1') -PlanOnly -Width 1920 -Height 1200} 'Non-16:9 plan accepted.'
+# Verify config parsing through harmless fixture files; no Chrome process is started.
+$temp=Join-Path ([IO.Path]::GetTempPath()) ('iventaito-check-'+[guid]::NewGuid().ToString('N'))
+[void](New-Item -ItemType Directory -Path $temp)
+try {
+ $fixture=Join-Path $temp 'chrome.exe'
+ Set-Content -LiteralPath $fixture -Value 'not executable'
+ $example.ChromePath=$fixture;$example.Profile='Profile 1';$example.CardId='sample123'
+ $configFile=Join-Path $temp 'settings.local.json'
+ $example | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding UTF8
+ $parsed=Read-HelperConfig $configFile
+ Assert ($parsed.Profile -eq 'Profile 1' -and $parsed.Name -eq $card.name) 'Config parsing failed.'
+ $example.CardId='REPLACE_AFTER_IMPORT'
+ $example | ConvertTo-Json | Set-Content -LiteralPath $configFile -Encoding UTF8
+ Assert-Throws {Read-HelperConfig $configFile} 'Unconfigured card accepted.'
+} finally {
+ # Only remove the exact two test fixture files in the freshly created temp directory.
+ Remove-Item -LiteralPath $fixture,$configFile -Force -ErrorAction SilentlyContinue
+ Remove-Item -LiteralPath $temp -Force
+}
+$launcher=$asts['launch-iventaito.ps1'].Extent.Text
+foreach($guard in @("if(`$tabs.Count -ne 1)","`$w.Current.ProcessId -ne `$owner.pid","`$value -ne `$expectedUrl",'Test-WindowIdentity $owner','if($documentUrl -ne $url)','Close-OwnedDashboard $url')) {
+ Assert ($launcher.Contains($guard)) ('Dashboard cleanup guard missing: '+$guard)
+}
+Assert (-not ($launcher -match 'Stop-Process|taskkill|--user-data-dir')) 'Unsafe process/profile operation found.'
+Write-Output 'PASS: syntax, JSON/CSS, config, quoted commands, window lifetime, dashboard guards, fullscreen bounds, plans. No UI launched.'

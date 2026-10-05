@@ -192,9 +192,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\prepare-cursor-extensi
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify.ps1
 node --test .\tests\cursor-extension.test.mjs
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify-cursor-package.ps1
+git diff --check
 ```
 
 Node.jsは拡張コードのテスト時だけ必要です。基本利用と補助拡張の実行には不要です。検査はChrome・ゲーム・Sunshineを起動せず、実機確認の代わりにはなりません。パッケージ生成テストはTEMPにダミー設定を作り、診断用に残します。
+
+[GitHub Actionsの設定](.github/workflows/ci.yml) はpushとpull request時に、Windows Server 2025の1ジョブで上の3検査と変更差分の空白検査を実行します。PowerShellはWindows PowerShell 5.1、Node.jsは24.15.0に固定し、ローカルでも上のコマンドで再現できます。ダミー設定とChrome APIのモックを使い、実Chrome・Sunshine・個人設定・ログイン情報は不要です。CIの合格はスマホの表示やタッチ、実ブラウザーのCSS適用、配信・復元の実機確認を代替しません。
+
+公式Actionは完全なcommit SHAに固定し、トークンはcontentsの読取りだけ、checkout後の資格情報保存とパッケージキャッシュは無効です。同じブランチ/PRの古い実行はキャンセルし、1ジョブを10分で打ち切ります。ActionやNodeの固定版を更新するときも、この検査を実行して確認してください。
 
 開発時の作業規約は [AGENTS.md](AGENTS.md) を参照してください。
 

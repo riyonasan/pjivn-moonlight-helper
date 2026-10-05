@@ -1,4 +1,4 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 function Assert($Condition,[string]$Message){if(-not $Condition){throw $Message}}
 $fixtureRoot=Join-Path ([IO.Path]::GetTempPath()) ('pjivn-cursor-package-'+[guid]::NewGuid().ToString('N'))

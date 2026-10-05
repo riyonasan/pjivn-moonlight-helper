@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'helper-common.ps1')
 if($PlanOnly){if([math]::Abs($Width/$Height-16/9) -gt 0.001){throw 'Target display must be 16:9.'};[pscustomobject]@{Width=$Width;Height=$Height;CssScale=$Width/1280;BrowserZoomChanged=$false;ChangesDisplayResolution=$false;Capture='Entire display'} | ConvertTo-Json;return}
 $config=Read-HelperConfig $ConfigPath
-$stateRoot=Initialize-StateDirectory
+$stateRoot=Initialize-StateDirectory $config
 Add-Type -AssemblyName UIAutomationClient,System.Windows.Forms
 if(-not ('PjivnNative' -as [type])){Add-Type @'
 using System;using System.Runtime.InteropServices;
@@ -34,11 +34,12 @@ $windows=@([System.Windows.Automation.AutomationElement]::RootElement.FindAll([S
 $statePath=Join-Path $stateRoot 'fullscreen-state.json'
 if($Restore -and $windows.Count -eq 0){return}
 if($windows.Count -ne 1){throw 'Expected exactly one dedicated game window.'}
+Assert-OwnedGameWindow $config $stateRoot $windows[0]
 $hwnd=[IntPtr]$windows[0].Current.NativeWindowHandle;$process=Get-Process -Id $windows[0].Current.ProcessId
 $mutex=New-Object System.Threading.Mutex($false,'Local\PjivnFullscreenLauncher')
 if(-not $mutex.WaitOne(0)){$mutex.Dispose();throw 'Another fullscreen operation is running.'}
 function Get-GameWindow{[System.Windows.Automation.AutomationElement]::FromHandle($hwnd)}
-function Focus-Game{if((Get-GameWindow).Current.Name -notin $allowedTitles -or (Get-GameWindow).Current.ProcessId -ne $process.Id -or (Get-Process -Id $process.Id).StartTime.Ticks -ne $process.StartTime.Ticks){throw 'Window identity changed.'};for($i=0;$i -lt 5;$i++){if([PjivnNative]::Focus($hwnd)){return};Start-Sleep -Milliseconds 200};throw 'Cannot focus exact game window.'}
+function Focus-Game{Assert-OwnedGameWindow $config $stateRoot (Get-GameWindow);if((Get-GameWindow).Current.Name -notin $allowedTitles -or (Get-GameWindow).Current.ProcessId -ne $process.Id -or (Get-Process -Id $process.Id).StartTime.Ticks -ne $process.StartTime.Ticks){throw 'Window identity changed.'};for($i=0;$i -lt 5;$i++){if([PjivnNative]::Focus($hwnd)){return};Start-Sleep -Milliseconds 200};throw 'Cannot focus exact game window.'}
 function Toggle-Fullscreen{
 
  Focus-Game
@@ -89,8 +90,8 @@ try{
  if(Test-Path -LiteralPath $statePath){$c=Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json;if((Test-WindowIdentity $c $hwnd.ToInt64() $process.Id $process.StartTime.Ticks) -and $c.active){$saved=$c}}
  if($Restore -and $null -eq $saved){return};Focus-Game;Start-Sleep -Milliseconds 300
  if($Restore){Apply-Snapshot $saved;$saved.active=$false;$saved | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $statePath;Write-Output 'Original fullscreen and placement restored; browser zoom untouched.';return}
- $config=Get-Content -LiteralPath $config.SunshineConfigPath -Raw
- if($config -match '(?m)^\s*output_name\s*=\s*\S+'){throw 'Explicit Sunshine display selection requires review.'}
+ $sunshineConfig=Get-Content -LiteralPath $config.SunshineConfigPath -Raw
+ if($sunshineConfig -match '(?m)^\s*output_name\s*=\s*\S+'){throw 'Explicit Sunshine display selection requires review.'}
  $screen=[System.Windows.Forms.Screen]::PrimaryScreen
  if([math]::Abs($screen.Bounds.Width/$screen.Bounds.Height-16/9) -gt 0.001){throw 'Default capture display must be 16:9.'}
  if($null -eq $saved){$p=New-Object PjivnNative+PLACEMENT;$p.length=[Runtime.InteropServices.Marshal]::SizeOf($p);if(-not [PjivnNative]::GetWindowPlacement($hwnd,[ref]$p)){throw 'Cannot save placement.'};$saved=[pscustomobject]@{handle=$hwnd.ToInt64();pid=$process.Id;processStartTicks=$process.StartTime.Ticks;fullscreen=(Test-Fullscreen);placement=$p;active=$true;method='responsive-css-chrome-menu'};$saved | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $statePath}

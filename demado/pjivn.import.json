@@ -4,8 +4,8 @@
   "mados": [
     {
       "url": "https://play.games.dmm.co.jp/game/pjivn_293854",
-      "name": "イヴンタイト（ゲーム画面 1280×720）",
-      "addressbar": true,
+      "name": "イヴンタイト",
+      "addressbar": false,
       "size": {
         "width": 1280,
         "height": 720

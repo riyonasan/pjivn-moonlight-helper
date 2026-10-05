@@ -24,7 +24,7 @@ $import=Get-Content (Join-Path $root 'demado/pjivn.import.json') -Raw -Encoding 
 $example=Get-Content (Join-Path $root 'config.example.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert ($import.mados.Count -eq 1 -and $import.version -eq '2.0.60') 'Unexpected import envelope.'
 $card=$import.mados[0]
-Assert ($card.name -eq $example.Name -and $card.addressbar -and $card.zoom -eq 1) 'Import/config mismatch.'
+Assert ($card.name -eq $example.Name -and $card.addressbar -eq $false -and $card.zoom -eq 1) 'Import/config mismatch.'
 Assert ($card.size.width -eq 1280 -and $card.size.height -eq 720) 'Unexpected game size.'
 Assert (-not $card.PSObject.Properties['_id'] -and -not $card.PSObject.Properties['position']) 'Local ID or position leaked.'
 Assert ($card.stylesheet -ceq (Get-Content (Join-Path $root 'demado/pjivn.css') -Raw -Encoding UTF8)) 'CSS is out of sync.'
@@ -77,4 +77,33 @@ foreach($guard in @("if(`$tabs.Count -ne 1)","`$w.Current.ProcessId -ne `$owner.
  Assert ($launcher.Contains($guard)) ('Dashboard cleanup guard missing: '+$guard)
 }
 Assert (-not ($launcher -match 'Stop-Process|taskkill|--user-data-dir')) 'Unsafe process/profile operation found.'
+# Moonlight assets preserve the PC layout and keep iframe cursor rules separate.
+$moonImport=Get-Content (Join-Path $root 'demado/pjivn-moonlight.import.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$moonConfig=Get-Content (Join-Path $root 'config.moonlight.example.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$moonCss=Get-Content (Join-Path $root 'demado/pjivn-moonlight.css') -Raw -Encoding UTF8
+Assert ($moonImport.mados.Count -eq 1 -and $moonConfig.Usage -eq 'moonlight') 'Moonlight separation missing.'
+Assert ($moonImport.mados[0].name -ceq $moonConfig.Name -and $moonConfig.Name -cne $card.name) 'Moonlight card name must be distinct.'
+Assert ($moonImport.mados[0].stylesheet -ceq $moonCss) 'Moonlight CSS is out of sync.'
+Assert ($moonCss.StartsWith($card.stylesheet) -and $moonCss.Contains('cursor: none !important')) 'PC layout changed in Moonlight CSS.'
+Assert ($moonImport.mados[0].url -ceq $card.url -and $moonImport.mados[0].addressbar -eq $true -and $moonImport.mados[0].zoom -eq $card.zoom) 'Moonlight card target/settings changed.'
+$inner=Get-Content (Join-Path $root 'demado/pjivn-moonlight-frame-cursor.css') -Raw -Encoding UTF8
+Assert (-not ($inner -match 'clip-path|transform:|position:|width:|height:')) 'Layout CSS leaked into iframe cursor candidate.'
+$ownershipConfig=[pscustomobject]@{Usage='moonlight';HelperConfigKey='config-a'}
+$owner=[pscustomobject]@{handle=42;pid=12;processStartTicks=12345678901234;configKey='config-a'}
+Assert (Test-GameOwnership $owner $ownershipConfig 42 12 12345678901234) 'Owned Moonlight window rejected.'
+Assert (-not (Test-GameOwnership $null $ownershipConfig 42 12 12345678901234)) 'Unowned PC window accepted.'
+Assert (-not (Test-GameOwnership $owner $ownershipConfig 43 12 12345678901234)) 'Reused Moonlight handle accepted.'
+Assert (-not (Test-GameOwnership $owner $ownershipConfig 42 13 12345678901234)) 'Different Moonlight PID accepted.'
+Assert (-not (Test-GameOwnership $owner $ownershipConfig 42 12 12345678901235)) 'Reused Moonlight PID accepted.'
+$ownershipConfig.HelperConfigKey='config-b'
+Assert (-not (Test-GameOwnership $owner $ownershipConfig 42 12 12345678901234)) 'Different Moonlight config accepted.'
+Assert ($launcher.Contains('foreach($existing in $targets){Assert-OwnedGameWindow') -and $launcher.Contains('Assert-OwnedGameWindow $config $stateRoot $target')) 'Launcher ownership guard missing.'
+Assert ($asts['fullscreen-pjivn.ps1'].Extent.Text.Contains('Assert-OwnedGameWindow $config $stateRoot $windows[0]')) 'Standalone fullscreen ownership guard missing.'
+Assert ($example.Name -ceq 'イヴンタイト') 'PC distribution card name mismatch.'
+Assert ($moonConfig.Name -ceq 'イヴンタイト(Moonlight)') 'Moonlight distribution card name mismatch.'
+$manifest=Get-Content (Join-Path $root 'cursor-extension/manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+Assert ($manifest.manifest_version -eq 3 -and $manifest.background.type -ceq 'module') 'Unexpected helper manifest.'
+Assert (($manifest.permissions -join ',') -ceq 'scripting,webNavigation,storage,alarms') 'Unexpected helper permissions.'
+Assert ($manifest.host_permissions.Count -eq 2 -and -not ($manifest.host_permissions -contains '<all_urls>')) 'Broad helper host permission.'
+Write-Output 'PASS: Moonlight assets, independent config, ownership/config mismatch guards. No UI launched.'
 Write-Output 'PASS: syntax, JSON/CSS, config, quoted commands, window lifetime, dashboard guards, fullscreen bounds, plans. No UI launched.'

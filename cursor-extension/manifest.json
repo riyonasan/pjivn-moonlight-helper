@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "pjivn Moonlight cursor",
+  "version": "0.1.0",
+  "minimum_chrome_version": "106",
+  "description": "Hide only the verified Moonlight Demado game's canvas cursor while its window is fullscreen.",
+  "permissions": ["scripting", "webNavigation", "storage", "alarms"],
+  "host_permissions": [
+    "https://play.games.dmm.co.jp/*",
+    "https://iv-n-tight.saikyo.biz/*"
+  ],
+  "background": {"service_worker": "background.js", "type": "module"},
+  "action": {"default_title": "Pause / resume Moonlight canvas cursor hiding"}
+}

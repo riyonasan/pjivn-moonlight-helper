@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'helper-common.ps1')
 $config=Read-HelperConfig $ConfigPath
-$stateRoot=Initialize-StateDirectory
+$stateRoot=Initialize-StateDirectory $config
 Add-Type -AssemblyName UIAutomationClient
 if(-not ('PjivnWindow' -as [type])) { Add-Type @'
 using System;
@@ -37,6 +37,7 @@ function Get-OwnedDashboard {
   if(-not (Test-Path -LiteralPath $dashboardOwnerPath)){return $null}
   $owner=Get-Content -LiteralPath $dashboardOwnerPath -Raw | ConvertFrom-Json
   if(-not $owner.active){return $null}
+  if($config.Usage -eq 'moonlight' -and $owner.configKey -cne $config.HelperConfigKey){return $null}
   $proc=Get-Process -Id $owner.pid -ErrorAction Stop
   if($proc.ProcessName -ne 'chrome' -or -not (Test-WindowIdentity $owner $owner.handle $proc.Id $proc.StartTime.Ticks)){return $null}
   $w=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$owner.handle)
@@ -67,6 +68,10 @@ function Close-OwnedDashboard([string]$expectedUrl) {
 
 $targets = @(Get-GameWindows)
 $statePath = Join-Path $stateRoot 'window-state.json'
+if($config.Usage -eq 'moonlight') {
+ foreach($existing in $targets){Assert-OwnedGameWindow $config $stateRoot $existing}
+ if($VerifyDemadoLaunch -and $targets.Count -gt 0){throw 'Moonlight verification must not reinvoke a card while a game window exists.'}
+}
 if ($Restore) {
  if(Test-Path -LiteralPath (Join-Path $stateRoot 'fullscreen-state.json')) {
   & (Join-Path $PSScriptRoot 'fullscreen-pjivn.ps1') -ConfigPath $ConfigPath -Restore
@@ -109,7 +114,7 @@ if ($targets.Count -eq 0 -or $VerifyDemadoLaunch) {
    if(($candidate.Current.NativeWindowHandle -in $beforeHandles -and $candidate.Current.NativeWindowHandle -ne $allowedHelperHandle) -or $candidate.Current.Name -ne 'demado - Google Chrome') {continue}
    if($candidate.Current.NativeWindowHandle -ne $allowedHelperHandle){
     $proc=Get-Process -Id $candidate.Current.ProcessId
-    @{handle=$candidate.Current.NativeWindowHandle;pid=$proc.Id;processStartTicks=$proc.StartTime.Ticks;url=$url;active=$true} | ConvertTo-Json | Set-Content -LiteralPath $dashboardOwnerPath
+    @{handle=$candidate.Current.NativeWindowHandle;pid=$proc.Id;processStartTicks=$proc.StartTime.Ticks;url=$url;active=$true;configKey=$config.HelperConfigKey} | ConvertTo-Json | Set-Content -LiteralPath $dashboardOwnerPath
     $allowedHelperHandle=$candidate.Current.NativeWindowHandle
    }
    $launchDiagnostic='matched target dashboard '+$candidate.Current.NativeWindowHandle
@@ -140,6 +145,7 @@ if ($targets.Count -eq 0 -or $VerifyDemadoLaunch) {
  }
  if($null -eq $card) {throw ('Demado dashboard game card not available: '+$launchDiagnostic+'. Check extension and permission prompts manually; no streaming will start.')}
  # This invokes Demado's supported default launch: reuse a matching window, or create the correctly cropped popup.
+ if($config.Usage -eq 'moonlight' -and @(Get-GameWindows).Count -gt 0){throw 'A game window appeared before card launch; refusing to reuse it.'}
  ([System.Windows.Automation.InvokePattern]$card.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)).Invoke()
  $deadline=(Get-Date).AddSeconds(35)
  do {
@@ -152,6 +158,12 @@ if ($targets.Count -eq 0 -or $VerifyDemadoLaunch) {
   }
  } while($targets.Count -eq 0 -and (Get-Date) -lt $deadline)
  if($targets.Count -ne 1) {throw 'Demado did not produce a unique game window. Complete any game login or permission prompt manually.'}
+ if($config.Usage -eq 'moonlight') {
+  $newGame=$targets[0]
+  if($newGame.Current.NativeWindowHandle -in $beforeHandles){throw 'Demado reused an existing window; refusing to claim ownership.'}
+  $proc=Get-Process -Id $newGame.Current.ProcessId
+  @{handle=$newGame.Current.NativeWindowHandle;pid=$proc.Id;processStartTicks=$proc.StartTime.Ticks;configKey=$config.HelperConfigKey} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $stateRoot 'game-owner.json')
+ }
  Start-Sleep -Seconds 2
  $openedViaDemado=$true
  }finally{
@@ -160,6 +172,7 @@ if ($targets.Count -eq 0 -or $VerifyDemadoLaunch) {
  }
 }
 $target=$targets[0]
+Assert-OwnedGameWindow $config $stateRoot $target
 $pattern=$target.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern)
 $previous=$null
 if(Test-Path -LiteralPath $statePath){$previous=Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json}

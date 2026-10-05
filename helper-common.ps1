@@ -18,11 +18,17 @@
  if(-not $c.ChromePath -or -not (Test-Path -LiteralPath $c.ChromePath -PathType Leaf)){throw 'Set ChromePath to an existing chrome.exe.'}
  if([IO.Path]::GetFileName($c.ChromePath) -ne 'chrome.exe'){throw 'ChromePath must point to chrome.exe.'}
  if(-not [IO.Path]::IsPathRooted($c.ChromePath) -or -not [IO.Path]::IsPathRooted($c.SunshineConfigPath)){throw 'Use absolute paths in ChromePath and SunshineConfigPath.'}
+ if($c.PSObject.Properties['Usage'] -and $c.Usage -notin @('pc','moonlight')){throw 'Usage must be pc or moonlight.'}
+ # A changed config or config location must never adopt a previously owned window.
+ $sha=[Security.Cryptography.SHA256]::Create()
+ try{$key=([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($resolved.ToLowerInvariant()+"`n"+(Get-Content -LiteralPath $resolved -Raw -Encoding UTF8))))).Replace('-','').ToLowerInvariant()}finally{$sha.Dispose()}
+ $c | Add-Member -NotePropertyName HelperConfigKey -NotePropertyValue $key
  $c
 }
 
-function Initialize-StateDirectory {
+function Initialize-StateDirectory($Config) {
  $path=Join-Path $PSScriptRoot '.local'
+ if($Config.Usage -eq 'moonlight'){$path=Join-Path $path ('moonlight-'+$Config.HelperConfigKey)}
  [void](New-Item -ItemType Directory -Path $path -Force)
  $path
 }
@@ -44,4 +50,20 @@ function Get-PrepCommands([string]$RepositoryPath,[string]$ConfigPath) {
  $script=Join-Path $RepositoryPath 'launch-pjivn.ps1'
  $base='powershell.exe -NoProfile -ExecutionPolicy Bypass -File "'+$script+'" -ConfigPath "'+$ConfigPath+'"'
  [pscustomobject]@{do=$base+' -Fullscreen';undo=$base+' -Restore'}
+}
+
+function Test-GameOwnership($Owner,$Config,[long]$Handle,[int]$ProcessId,[long]$StartTicks) {
+ return ($null -ne $Owner -and $Owner.configKey -ceq $Config.HelperConfigKey -and
+  (Test-WindowIdentity $Owner $Handle $ProcessId $StartTicks))
+}
+
+function Assert-OwnedGameWindow($Config,[string]$StateRoot,$Window) {
+ if($Config.Usage -ne 'moonlight'){return}
+ $ownerPath=Join-Path $StateRoot 'game-owner.json'
+ if(-not (Test-Path -LiteralPath $ownerPath)){throw 'Unowned game window: leave the PC window unchanged and close it manually before Moonlight launch.'}
+ $owner=Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json
+ $proc=Get-Process -Id $Window.Current.ProcessId -ErrorAction Stop
+ if($proc.ProcessName -ne 'chrome' -or -not (Test-GameOwnership $owner $Config $Window.Current.NativeWindowHandle $proc.Id $proc.StartTime.Ticks)){
+  throw 'Game window ownership/config mismatch; refusing to change the PC window.'
+ }
 }

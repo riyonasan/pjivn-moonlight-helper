@@ -103,7 +103,10 @@ Assert ($example.Name -ceq 'イヴンタイト') 'PC distribution card name mism
 Assert ($moonConfig.Name -ceq 'イヴンタイト(Moonlight)') 'Moonlight distribution card name mismatch.'
 $manifest=Get-Content (Join-Path $root 'cursor-extension/manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert ($manifest.manifest_version -eq 3 -and $manifest.background.type -ceq 'module') 'Unexpected helper manifest.'
+$version=(Get-Content (Join-Path $root 'VERSION') -Raw -Encoding UTF8).Trim()
+Assert ($version -cmatch '^[1-9][0-9]*\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') 'Expected a stable SemVer version of at least 1.0.0.'
+Assert ($manifest.version -ceq $version) 'Helper VERSION and extension manifest version differ.'
 Assert (($manifest.permissions -join ',') -ceq 'scripting,webNavigation,storage,alarms') 'Unexpected helper permissions.'
 Assert ($manifest.host_permissions.Count -eq 2 -and -not ($manifest.host_permissions -contains '<all_urls>')) 'Broad helper host permission.'
-Write-Output 'PASS: Moonlight assets, independent config, ownership/config mismatch guards. No UI launched.'
+Write-Output 'PASS: Moonlight assets, independent config, ownership/config mismatch guards, distribution version. No UI launched.'
 Write-Output 'PASS: syntax, JSON/CSS, config, quoted commands, window lifetime, dashboard guards, fullscreen bounds, plans. No UI launched.'

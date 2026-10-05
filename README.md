@@ -1,5 +1,18 @@
 # pjivn-moonlight-helper
 
+本体の版は [VERSION](VERSION) が正本です。運用済みの構成を1.0.0から管理します。
+任意拡張も同じ版に揃えます。版番号はタグやGitHub Releaseの発行を意味しません。
+公開前の変更は [CHANGELOG.md](CHANGELOG.md) の `Unreleased` に記録します。
+
+| 文書 | 用途 |
+| --- | --- |
+| このREADME | 配布入口、基本導入、PC/Moonlight利用と復旧 |
+| [補助拡張README](cursor-extension/README.md) | 任意の内部canvasカーソル非表示の導入・解除 |
+| [AGENTS.md](AGENTS.md) | このリポジトリを扱うAIの規則 |
+| [DEV_WORKFLOW.md](DEV_WORKFLOW.md) | 開発時の検査、CI、独立レビュー、版更新 |
+| [検証履歴](docs/VERIFICATION.md) | 実機確認の証拠、未確認点、過去の試験結果 |
+| [変更履歴](CHANGELOG.md) | 利用者向けの変更点と公開状態 |
+
 ## ンポ向けの説明
 
 PCブラウザ版のイヴンタイトを、スマホから遊びやすくするための設定・補助ツール集です。ゲームは自宅のWindows PCで動かし、Sunshine/Moonlightを使ってスマホへ映像を送り、スマホから操作します。遊ぶときはPCが必要です。
@@ -184,24 +197,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\prepare-cursor-extensi
 
 英語Chrome、他のDemado/Chrome版、複数プロファイル・モニター、非16:9画面、仮想ディスプレイ、特殊なDPI、別ユーザーのSunshineは未検証です。全Chromeプロセスの終了やプロファイルの初期化は行いません。このツールが開いたダッシュボードも、プロセス・窓・1タブ・URLが一致する場合だけ閉じます。
 
-ゲームページの二段iframeとUnity canvasの構造は実環境で読取り確認済みです。PowerShell・設定・所有窓ガード・拡張の判定/解除・パッケージ生成には画面を起動しない検査があります。補助拡張を本人が読み込んだ後、手動で開いたMoonlightカードで通常窓→F11全画面→通常窓を確認し、内部canvasのcomputed cursorはdefault→none→defaultでした。本人の目視でも非表示と復帰を確認し、PCカードの全画面ではカーソルが残ることを確認しました。PCカードの通常窓でもcomputed cursorはdefaultでした。カードIDの直接読取りとChrome APIのwindow stateは観測していません。再読込み試験では外側frameが空のままcanvas待ちがタイムアウトしたため、frame再生成後の再適用は実機未検証です。その後、本人がMoonlightカードを開き直してゲームの復帰を確認しました。再読込み時に空になった原因は不明です。2026-10-05、このリポジトリの配布JSONから新規カードを作り、新IDと本人確認済みプロファイルで設定・do/undoを生成し、Sunshineへ登録する基本導入の受け入れ試験に合格しました。本人がスマホMoonlightからの起動・全画面・欠けなしの表示・タッチ位置一致・終了undoを確認し、ランチャー出力にも全画面準備完了と元の窓配置への復元成功を確認しました。基本試験では新カード用の補助拡張を導入せず、基本利用が独立して使えることを確認しました。その後、新カード専用パッケージを生成・検査して本人が読み込み、スマホMoonlight全画面時のゲーム内カーソル非表示、終了undo後の復帰、PCカードでのカーソル表示維持も本人が確認し、任意機能の受け入れ試験に合格しました。新カードでの結果は本人確認で、内部canvasのcomputed cursorを直接観測した先の試験とは区別しています。初回は準備コマンドが終了コード1で停止し、残存ゲーム窓を閉じた後に成功しました。初回の例外本文がなく、原因は断定していません。補助拡張のpause操作と再読込み・frame再生成後の再適用は未実機検証です。他の環境での動作を保証するものではありません。
+本人の環境では、配布JSONからの基本導入とスマホMoonlightでの起動・全画面・表示・タッチ・終了復元を確認済みです。任意拡張のカーソル非表示・復帰とPCカードの表示維持も確認済みです。ファイル検査と実機確認を分けた証拠、再読込み試験の失敗、残る未確認点は [検証履歴](docs/VERIFICATION.md) を参照してください。他の環境での動作を保証するものではありません。
 
-## ファイル検査
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify.ps1
-node --test .\tests\cursor-extension.test.mjs
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify-cursor-package.ps1
-git diff --check
-```
-
-Node.jsは拡張コードのテスト時だけ必要です。基本利用と補助拡張の実行には不要です。検査はChrome・ゲーム・Sunshineを起動せず、実機確認の代わりにはなりません。パッケージ生成テストはTEMPにダミー設定を作り、診断用に残します。
-
-[GitHub Actionsの設定](.github/workflows/ci.yml) はpushとpull request時に、Windows Server 2025の1ジョブで上の3検査と変更差分の空白検査を実行します。PowerShellはWindows PowerShell 5.1、Node.jsは24.15.0に固定し、ローカルでも上のコマンドで再現できます。ダミー設定とChrome APIのモックを使い、実Chrome・Sunshine・個人設定・ログイン情報は不要です。CIの合格はスマホの表示やタッチ、実ブラウザーのCSS適用、配信・復元の実機確認を代替しません。
-
-公式Actionは完全なcommit SHAに固定し、トークンはcontentsの読取りだけ、checkout後の資格情報保存とパッケージキャッシュは無効です。同じブランチ/PRの古い実行はキャンセルし、1ジョブを10分で打ち切ります。ActionやNodeの固定版を更新するときも、この検査を実行して確認してください。
-
-開発時の作業規約は [AGENTS.md](AGENTS.md) を参照してください。
+開発時の3検査とCI・レビュー手順は [DEV_WORKFLOW.md](DEV_WORKFLOW.md) にまとめています。Node.jsは拡張コードのテスト時だけ必要で、基本利用と補助拡張の実行には不要です。
 
 ## ライセンス
 

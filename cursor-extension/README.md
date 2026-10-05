@@ -1,8 +1,13 @@
 # Moonlight canvas cursor helper
 
-## 選定
+[基本導入とPC/Moonlight利用](../README.md) に追加する任意機能です。
+本体の [VERSION](../VERSION) と配布manifestの版を揃え、生成パッケージへmanifestをそのままコピーします。
+変更点は [CHANGELOG.md](../CHANGELOG.md)、開発時の検査は [DEV_WORKFLOW.md](../DEV_WORKFLOW.md)、
+実機の証拠と未確認点は [検証履歴](../docs/VERIFICATION.md) を参照してください。
 
-小さなManifest V3補助拡張を選びました。Demado本体は変更しません。
+## 役割と構成
+
+小さなManifest V3補助拡張です。Demado本体は変更しません。
 **これは内部canvasのカーソル非表示だけの任意機能です。** 基本のPC/Moonlightカード表示、
 ランチャー起動、全画面/復元、Sunshine/Moonlight利用に拡張導入・生成・拡張設定は不要です。
 未導入ならゲーム内部のカーソルが残ります。基本ランチャーに拡張の存在確認はありません。
@@ -16,7 +21,7 @@
 | 解除 | 各frame内のstyleと識別中継の後始末 | 挿入済みdocumentをsession storageで管理しremoveCSS |
 
 ユーザースクリプトでも安全な中継を実装すれば可能ですが、同URLへ一律適用する短い
-スクリプトではPC側も隠してしまいます。今回はタブ単位の判断を一か所に集めます。
+スクリプトではPC側も隠してしまいます。この拡張ではタブ単位の判断を一か所に集めます。
 
 ## 対象と動作
 
@@ -55,7 +60,7 @@ Demado初期化はトップのisolated worldで1秒ごとに2つのカード設�
 pauseは現在のChromeセッション中だけ有効で、Chrome再起動後は自動判定へ戻ります。
 権限が足りなくても自動要求はせず、対象を決められなければ新規適用しません。
 
-## Git正本からの準備（導入は別途承認）
+## Git正本からの準備と導入
 
 配布名はPCカード `イヴンタイト`、Moonlightカード `イヴンタイト(Moonlight)`。
 ChromeのProfileディレクトリ名とは別物です。Demadoインポートは新しいカードIDを発行します。
@@ -95,7 +100,7 @@ JavaScript 4ファイルとmanifest、カード識別だけの `settings.local.j
 
 本人の承認後、確認済みのゲーム用Chromeプロファイルで、Chromeの拡張管理画面から
 生成したフォルダを「パッケージ化されていない拡張機能」として読み込みます。
-これには開発者モードと拡張導入の確認が必要です。今回は実施していません。
+これには開発者モードと拡張導入の確認が必要です。本人の導入確認履歴は [検証履歴](../docs/VERIFICATION.md) に記録しています。
 
 必要なAPI権限は `scripting`, `webNavigation`, `storage`, `alarms`。
 hostは `https://play.games.dmm.co.jp/*` と `https://iv-n-tight.saikyo.biz/*` の2originだけ。
@@ -105,7 +110,7 @@ osapiのhost権限は要求しません。`tabs`権限、Cookie、履歴、認�
 全サイト権限、ネットワーク送信、外部メッセージ入口、Demadoの権限変更は不要です。
 Demadoから読み取るのはカード用の指定キーだけで、保存領域の列挙はしません。
 
-## 起動・解除と未検証点
+## 起動・解除と復旧
 
 導入後はMoonlightカードの初期化と全画面化に合わせ自動適用します。
 `launch-pjivn.ps1 -Restore` が通常窓へ戻す場合は自動解除します。
@@ -114,36 +119,20 @@ Demadoから読み取るのはカード用の指定キーだけで、保存領�
 元のMoonlightカードCSSが隠すトップ文書のcursorはそのままで、pauseは内部canvas用CSSだけを解除します。
 
 通常PCカードとMoonlightカードを同時に開いても、拡張の判断は別カードIDなので
-PCタブへCSSを適用しません。ただし前回追加したPowerShellランチャーの窓ガードは
-PCゲーム窓がある場合に停止する仕様のままです。同時起動をランチャーで自動処理する
-変更は含みません。本人が各カードを開いた場合の拡張の同時利用はテストで検査しています。
+PCタブへCSSを適用しません。ただしPowerShellランチャーの窓ガードは
+PCゲーム窓がある場合に停止する仕様です。同時起動をランチャーで自動処理する機能はありません。PC/Moonlightタブが同時に存在する場合のカード識別はChrome APIモックで検査しています。
 
 補助拡張の無効化・更新・再ロード・アンインストール前はpauseし、解除完了を確認してください。
 解除不能と表示された時は、対象ゲームページを本人がリロードするか閉じればdocumentとCSSが
 なくなります。拡張を無効化するだけでCSSが必ず即時に消えるとは扱いません。
 
-コード/モック検査済み。本人による生成パッケージの読込み後、手動で開いたMoonlightカードで
-通常窓→本人のF11全画面→通常窓を確認しました。内部canvasのcomputed cursorは
-default→none→defaultで、本人の目視でも非表示と復帰を確認しました。
-PCカードの全画面でカーソルが残ることは本人の目視確認、通常窓のcomputed cursorがdefaultであることはDOM観測で確認済みです。
-その後、新規インポートしたカード専用のパッケージを生成・検査して本人が読み込み、スマホMoonlightで起動した全画面ゲーム内のカーソル非表示、終了undo後の復帰、PCカードでの表示維持を本人が確認し、任意機能の受け入れ試験に合格しました。新カードの結果は本人確認で、こちらによるcomputed cursorの再測定はしていません。
-カードIDの直接読取り、Chrome APIによるwindow state取得、pause操作、ゲーム進行操作の維持は未実機検証です。基本ランチャーの新規カード作成・生成・Sunshine登録・スマホ起動/全画面/表示/タッチ/終了復元は、補助拡張を新カードへ導入しない別の受け入れ試験で本人確認済みです。
-再読込み試験では外側frameが空のままcanvas待ちがタイムアウトしました。
-追加の再読込みは行っておらず、frame再生成後の再適用は未実機検証です。
-原因は特定できていません。その後、本人がMoonlightカードを開き直してゲームの復帰を確認しました。開き直し後のcomputed cursorと再適用は未観測です。
 遷移や全画面操作からイベント処理までの短い非同期遅延があるため、即時・原子的な切替ではありません。
 
-## 再現可能な検査
+## 検証状況
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify.ps1
-node --test .\tests\cursor-extension.test.mjs
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify-cursor-package.ps1
-```
+本人の環境で通常窓→F11全画面→通常窓の非表示・復帰と、スマホMoonlightでの非表示・終了undo後の復帰、PCカードの表示維持を確認済みです。pause操作と再読込み・frame再生成後の再適用などは実機未検証です。観測方法の違いと再読込み試験の失敗を含む [検証履歴](../docs/VERIFICATION.md) を確認してください。
 
-Node.jsはテスト時だけ必要で、拡張の利用には不要です。Node組込みtest/assert/vmのみを使用します。
-すべてゲーム・Chrome・Sunshineを起動しない検査です。パッケージ検査はTEMPにダミー構成を
-作成し、生成内容とPC設定拒否・既存パッケージ保持を確認します。診断用fixtureはTEMPに残します。
+開発者向けの3検査とパッケージ生成の検査範囲は [DEV_WORKFLOW.md](../DEV_WORKFLOW.md) にあります。Node.jsはテスト時だけ必要で、拡張の利用には不要です。
 
 公式仕様: [scripting/documentId/CSS](https://developer.chrome.com/docs/extensions/reference/api/scripting)、
 [navigation/frame/document](https://developer.chrome.com/docs/extensions/reference/api/webNavigation)、

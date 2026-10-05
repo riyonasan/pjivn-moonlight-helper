@@ -1,5 +1,6 @@
 ﻿$ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
+$version=(Get-Content (Join-Path $root 'VERSION') -Raw -Encoding UTF8).Trim()
 function Assert($Condition,[string]$Message){if(-not $Condition){throw $Message}}
 $fixtureRoot=Join-Path ([IO.Path]::GetTempPath()) ('pjivn-cursor-package-'+[guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $fixtureRoot)
@@ -19,6 +20,13 @@ Assert ($settings.PSObject.Properties.Name.Count -eq 6) 'Unexpected settings fie
 foreach($secret in @('ChromePath','Profile','SunshineConfigPath',$fixtureRoot)) {Assert (-not $json.Contains($secret)) 'Local environment leaked into extension config.'}
 $package=Split-Path $packages[0].FullName -Parent
 Assert (@(Get-ChildItem -LiteralPath $package -File).Count -eq 6) 'Unexpected package contents.'
+$generatedManifest=Get-Content (Join-Path $package 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+Assert ($generatedManifest.version -ceq $version) 'Generated manifest version differs from helper VERSION.'
+foreach($name in @('manifest.json','background.js','controller.js','policy.js','probes.js')) {
+ $sourceHash=(Get-FileHash -LiteralPath (Join-Path (Join-Path $root 'cursor-extension') $name) -Algorithm SHA256).Hash
+ $packageHash=(Get-FileHash -LiteralPath (Join-Path $package $name) -Algorithm SHA256).Hash
+ Assert ($sourceHash -ceq $packageHash) ('Generated file differs from distribution source: '+$name)
+}
 $before=(Get-FileHash -LiteralPath $packages[0].FullName -Algorithm SHA256).Hash
 $failed=$false
 try{& $script -ConfigPath $configFile | Out-Null}catch{$failed=$true}
@@ -51,4 +59,4 @@ $config | ConvertTo-Json | Set-Content -LiteralPath $fullConfig -Encoding UTF8
 $packages=@(Get-ChildItem -LiteralPath (Join-Path $fixtureRoot '.local') -Filter 'settings.local.json' -Recurse)
 Assert ($packages.Count -eq 2) 'Full launcher config compatibility failed.'
 foreach($settingsFile in $packages){$text=Get-Content -LiteralPath $settingsFile.FullName -Raw -Encoding UTF8; Assert (-not ($text -match 'not-a-real-profile|not-an-installed-chrome|not-a-sunshine-config')) 'Unused environment values leaked.'}
-Write-Output 'PASS: minimal card-only generation, full config compatibility, identity rejection, no personal fields, PC rejection, existing package preservation. No UI/installation.'
+Write-Output 'PASS: version/source fidelity, minimal card-only generation, full config compatibility, identity rejection, no personal fields, PC rejection, existing package preservation. No UI/installation.'

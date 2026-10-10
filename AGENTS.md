@@ -1,5 +1,11 @@
 # このリポジトリを扱うAI向け
 
+## Shared configuration reference
+
+The approved shared policy and separately distributed guides are maintained in private [riyonasan/agent-config](https://github.com/riyonasan/agent-config). Adopted version: `v2.0.0` (candidate; no tag/Release). Full central commit SHA: `567cd35aa3660df77687a1280ae0e429111a5830`. Read the [pinned shared policy](https://github.com/riyonasan/agent-config/blob/567cd35aa3660df77687a1280ae0e429111a5830/AGENTS.md) through the active Codex home (`CODEX_HOME`, otherwise the user profile's `.codex`). Do not copy shared policy or guides into this project. Placement and instruction loading are separate checks; this reference alone does not prove they succeeded.
+
+Shared review/model selection, approval, and Notion rules follow that adopted policy, including when older workflow documents contain superseded general guidance. Preserve project-specific product, data, and permission constraints. Notion holds current overview, usage, behavior, limitations, and agreed decisions; routine progress and task-status updates are excluded. Task administration requires a separate explicit request.
+
 このリポジトリはイヴンタイトのゲームURL識別子`pjivn`を使う小さな補助ツールです。[README](README.md)を読んでから作業してください。任意拡張は[拡張README](cursor-extension/README.md)、検査・CI・独立レビュー・版更新は[DEV_WORKFLOW](DEV_WORKFLOW.md)、実機の証拠は[検証履歴](docs/VERIFICATION.md)を参照します。ここにはAIの作業規則を置きます。ユーザーの明示的な指示がこの手順より優先します。
 
 - 最初はファイル・構文・設定例を確認し、`tests/verify.ps1`をWindows PowerShell 5.1で実行してください。この検査はUIを起動しません。
@@ -15,3 +21,9 @@
 - 報告は「ファイル検査済み」「本人のPCで確認済み」「Moonlight経由で確認済み」を実際の証拠に合わせて書き分けます。第三者実機と移植後のUIは未検証なので、必ず動くとは説明しないでください。
 
 ライセンスは未指定です。第三者コードやゲーム素材を追加して配布しないでください。個人設定・ログ・認証情報をコミット対象にしないでください。
+
+## Reliability and acceptance
+
+For this personal project, prioritize the requested representative workflow, a clear failure result, and practical manual recovery. Add automatic recovery, persistent retry tracking, rare-state handling, or stricter recognition only for an observed need and agreed scope. Preserve all project-specific constraints on data integrity, uncertain irreversible actions, credentials, purchases, and third-party assets.
+
+Define completion by the user action and observable result, with acceptable limitations. Use the existing specification and HANDOFF (or the documented restart file); record the objective, unmet criteria, latest evidence, and next action briefly. Apply the shared review process once per coherent feature rather than once per small patch.

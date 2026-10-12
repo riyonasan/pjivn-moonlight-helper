@@ -39,7 +39,7 @@ Chrome・ゲーム・Sunshineは起動せず、ログイン情報も実Chromeプ
 
 ## 版と配布物の整合
 
-本体はPowerShellスクリプトとDemadoのJSON/CSSをそのまま配布するため、ビルド用packageや版取得処理は追加しません。ルートの [VERSION](VERSION) を本体版の正本とし、任意拡張の [manifest.json](cursor-extension/manifest.json) の `version` を同じ値に揃えます。生成器はmanifestをそのままコピーする既存方式を維持します。拡張の `package.json` はNodeのmodule指定だけで、配布版の正本ではありません。Demado JSONの `version: 2.0.60` と拡張の `manifest_version: 3` は各形式の版で、本体版とは別です。
+本体はPowerShellスクリプトとDemadoのJSON/CSSをそのまま配布するため、ビルド用packageや版取得処理は追加しません。ルートの [VERSION](VERSION) を本体版の正本とし、任意拡張の [manifest.json](cursor-extension/manifest.json) の `version` を同じ値に揃えます。生成器はmanifestをそのままコピーする既存方式を維持します。拡張の `package.json` はNodeのmodule指定とライセンス情報を持ち、配布版の正本ではありません。Demado JSONの `version: 2.0.60` と拡張の `manifest_version: 3` は各形式の版で、本体版とは別です。
 
 [Semantic Versioning 2.0.0](https://semver.org/lang/ja/) に従い、運用済み構成の基準版を1.0.0とします。公開するインターフェースは、READMEで案内するスクリプトの引数、設定キー、カード名と配布JSON/CSS、生成パッケージの導入・解除手順です。後方互換の修正はPATCH、互換性を保つ機能追加はMINOR、これらを壊す変更はMAJORを上げます。ゲームDOMや外部アプリの変更で必要になった対応も、利用者への互換性で判断します。
 

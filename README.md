@@ -203,4 +203,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\prepare-cursor-extensi
 
 ## ライセンス
 
-ソースコードのライセンスは現在未設定です（LICENSEファイルなし）。ゲーム素材やDemado本体は含まれません。ゲームと外部ソフトウェアの利用条件は、それぞれの提供元の案内をご確認ください。
+このリポジトリのソースコードと付属文書は [MIT License](LICENSE) で提供します。著作権表示は `Copyright (c) 2026 riyonasan` です。ゲーム素材やDemado本体は含まれません。ゲームと外部ソフトウェアの利用条件は、それぞれの提供元の案内をご確認ください。

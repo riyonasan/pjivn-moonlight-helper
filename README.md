@@ -4,6 +4,8 @@
 任意拡張も同じ版に揃えます。版番号はタグやGitHub Releaseの発行を意味しません。
 公開前の変更は [CHANGELOG.md](CHANGELOG.md) の `Unreleased` に記録します。
 
+**LinuxミニPCで使う場合は [Linux版の導入・運用](docs/LINUX.md) へ進んでください。** GNOME Wayland・ダミープラグ1画面・専用ブラウザー方式です。以下のDemado/PowerShellの手順はWindows版です。Linux版の実ゲーム・配信受け入れはまだ未確認です。
+
 | 文書 | 用途 |
 | --- | --- |
 | このREADME | 配布入口、基本導入、PC/Moonlight利用と復旧 |
@@ -11,6 +13,7 @@
 | [AGENTS.md](AGENTS.md) | このリポジトリを扱うAIの規則 |
 | [DEV_WORKFLOW.md](DEV_WORKFLOW.md) | 開発時の検査、CI、独立レビュー、版更新 |
 | [検証履歴](docs/VERIFICATION.md) | 実機確認の証拠、未確認点、過去の試験結果 |
+| [Linux版](docs/LINUX.md) | ミニPCの専用ブラウザー起動・診断・Sunshine登録 |
 | [変更履歴](CHANGELOG.md) | 利用者向けの変更点と公開状態 |
 
 ## ンポ向けの説明

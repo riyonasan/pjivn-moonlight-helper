@@ -12,6 +12,19 @@
 
 この手順自体は公開、タグ、GitHub Release、実機設定変更の許可ではありません。許可が既にある作業はその範囲で進めます。
 
+## Linux版の検査
+
+Linux版は専用worktreeで、次の検査を実行します。Python標準ライブラリだけを使い、ブラウザーや画面は起動しません。プロセス終了検査もPythonのダミー子プロセスで行います。
+
+```bash
+python3 -m unittest discover -s tests -p 'test_linux_*.py' -v
+git diff --check
+```
+
+設定と画面選択、125%倍率、二重起動・既存プロファイルの保護、所有する子プロセスだけへの終了要求、Sunshineコマンドの引用、CSS・版同期を確認します。実機の `doctor` はGNOMEの読取り専用APIを使うため `python3-gi` とセッションバス接続が必要です。静的・ダミー検査とは分けて報告します。
+
+PowerShellがないLinux環境ではWindowsの3検査を実行済みとしません。既存のWindows CIを維持し、Linux CIと併せて結果を確認します。Linux版の受け入れは [LINUX.md](docs/LINUX.md) の本人確認が必要です。
+
 ## 再現可能なファイル検査
 
 リポジトリのルートで実行します。Windows PowerShell 5.1とNode.jsが必要です。依存パッケージのインストールはありません。
@@ -34,6 +47,8 @@ Chrome・ゲーム・Sunshineは起動せず、ログイン情報も実Chromeプ
 ## CI
 
 [GitHub Actions](.github/workflows/ci.yml) はpushとpull request時に、Windows Server 2025の1ジョブで上の3検査と差分の空白検査を実行します。Windows PowerShell 5.1、Node.js 24.15.0に固定し、ダミー設定とChrome APIモックを使います。
+
+Linux版は別のUbuntu 24.04ジョブで、runner付属Python 3による上記unittestを実行します。
 
 公式Actionは完全なcommit SHAに固定しています。トークンはcontentsの読取りだけ、checkout後の資格情報保存とパッケージキャッシュは無効です。同じブランチ/PRの古い実行をキャンセルし、1ジョブを10分で打ち切ります。ActionやNodeの固定版を更新するときも上の検査で確認します。
 

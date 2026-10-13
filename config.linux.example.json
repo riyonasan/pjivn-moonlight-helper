@@ -1,0 +1,6 @@
+{
+  "BrowserPath": "/absolute/path/to/chrome",
+  "SunshineConfigPath": "/absolute/path/to/sunshine.conf",
+  "SunshineOutput": "REPLACE_WITH_SUNSHINE_OUTPUT",
+  "DesktopOutput": "REPLACE_WITH_GNOME_CONNECTOR"
+}

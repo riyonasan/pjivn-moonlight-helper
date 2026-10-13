@@ -11,6 +11,18 @@
 | 本人のスマホMoonlight | 2026-10-05の基本導入と、その後の任意拡張の受け入れを確認済み |
 | 第三者・別環境 | 未検証。移植後のUIや環境依存を保証しない |
 
+## 2026-10-14: LinuxミニPC版の実装と読取り診断
+
+対象のミニPCはUbuntu 26.04.1 LTS / GNOME Waylandです。本人がダミープラグ導入済みと確認し、Linuxでは専用ブラウザーで直接起動し、配信終了時に閉じる方式を承認しました。既存Windows版の実装は維持しています。
+
+GNOME `GetCurrentState` の読取りで、有効画面1台・1920×1080・60Hz・倍率125%（論理1536×864）を確認しました。Sunshineの既存設定はKMSでその出力を選択し、既存ログにも同画面の配信開始・クライアント接続が記録されています。これは既存配信の証拠であり、本ゲームのLinux受け入れではありません。
+
+Linux版の `doctor` を通常ユーザーのセッションに接続して実行し、実ブラウザー本体の存在、Sunshine出力とローカル設定の一致、現在の画面構成を確認しました。サンドボックス内ではセッションバス接続が拒否されたため、読取り専用診断の承認を得て実行しています。画面やSunshine設定は変更していません。
+
+Python検査12件に合格しました。ダミープロセスでの終了伝達・他プロセスの維持、設定・画面・倍率、二重起動と既存プロファイルの保護、コマンドの引用、CSSと版の同期を確認しています。ブラウザーは起動せず、専用プロファイルもまだ作成していません。
+
+Windows PowerShell 5.1とNode.jsがこの作業環境にないため、既存Windowsの3検査はローカル未実施です。Windows CIを維持し、Linux検査を追加しています。Linuxでの拡張読込み、本人ログイン、全画面の実適用、音声・タッチ、Moonlight終了後のブラウザー終了・再起動は未確認です。[Linux受け入れ手順](LINUX.md)で別途確認します。
+
 ## ゲーム構造の読取りと手動全画面試験
 
 旧拡張READMEに2026-10-05の読取りとして記録された、実ページの二段iframeとUnity canvasの確認結果です。トップは `https://play.games.dmm.co.jp/game/pjivn_293854`、`iframe#game_frame` は `https://osapi.dmm.com/gadgets/ifr`、その下の `iframe#gameHTML5Canvas` は `https://iv-n-tight.saikyo.biz/app_data/` です。`canvas#unity-canvas` は1280×720で、通常時のinline/computed cursorは `default` でした。

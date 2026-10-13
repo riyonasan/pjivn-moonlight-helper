@@ -8,6 +8,9 @@ Shared review/model selection, approval, and Notion rules follow that adopted po
 
 このリポジトリはイヴンタイトのゲームURL識別子`pjivn`を使う小さな補助ツールです。[README](README.md)を読んでから作業してください。任意拡張は[拡張README](cursor-extension/README.md)、検査・CI・独立レビュー・版更新は[DEV_WORKFLOW](DEV_WORKFLOW.md)、実機の証拠は[検証履歴](docs/VERIFICATION.md)を参照します。ここにはAIの作業規則を置きます。ユーザーの明示的な指示がこの手順より優先します。
 
+- LinuxミニPC版は [docs/LINUX.md](docs/LINUX.md) の専用ブラウザー方式です。下記のDemado・PowerShell・窓復元に関する規則はWindows版に適用します。LinuxではDEV_WORKFLOWのPython検査を先に実行し、Windows検査が実行できなければ未実施と明記します。独立レビュー要件は共通です。
+- Linux版はGNOME Waylandの有効画面1台と既存のSunshine KMS配信を前提にします。画面・Sunshine設定は読取りだけにし、端子名を推測しません。専用プロファイルを既存ブラウザーの認証情報から作らず、初回ログイン・拡張読込み・実ゲーム確認は本人が行います。表示拡張の `layout.css` と `demado/pjivn.css` は一致させます。
+
 - 最初はファイル・構文・設定例を確認し、`tests/verify.ps1`をWindows PowerShell 5.1で実行してください。この検査はUIを起動しません。
 - 環境固有の値は推測しないでください。使用するChromeプロファイル、Demadoインポート後のカードID/表示名、拡張ID、日本語Chrome・16:9主画面・Sunshine表示選択を、本人の確認または許可された読み取りで確かめてください。設定例の`Default`や標準インストール先は仮の値です。
 - `ChromePath`の一般的な場所の検出と、本人指定パスの存在確認は可能です。プロファイル内のCookies、Login Data、認証DB、セッション情報は読取・コピー・移植しないでください。他ゲームの設定も持ち出さないでください。

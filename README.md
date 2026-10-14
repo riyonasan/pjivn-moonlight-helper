@@ -4,7 +4,7 @@
 任意拡張も同じ版に揃えます。版番号はタグやGitHub Releaseの発行を意味しません。
 公開前の変更は [CHANGELOG.md](CHANGELOG.md) の `Unreleased` に記録します。
 
-**LinuxミニPCで使う場合は [Linux版の導入・運用](docs/LINUX.md) へ進んでください。** GNOME Wayland・ダミープラグ1画面・専用ブラウザー方式です。以下のDemado/PowerShellの手順はWindows版です。Linux版の実ゲーム・配信受け入れはまだ未確認です。
+**LinuxミニPCで使う場合は [Linux版の導入・運用](docs/LINUX.md) へ進んでください。** GNOME Wayland・ダミープラグ1画面・専用ブラウザー方式です。以下のDemado/PowerShellの手順はWindows版です。Linux版は本人がMoonlight経由の全画面表示を確認済みです。入力・音声・終了と追加カーソル機能は引き続き確認が必要です。
 
 | 文書 | 用途 |
 | --- | --- |

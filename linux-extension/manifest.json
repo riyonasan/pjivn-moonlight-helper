@@ -1,14 +1,36 @@
 {
   "manifest_version": 3,
   "name": "pjivn Linux game layout",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Fit the pjivn game to a dedicated Linux Moonlight browser window.",
   "content_scripts": [
     {
-      "matches": ["https://play.games.dmm.co.jp/game/pjivn_293854*"],
-      "css": ["layout.css"],
+      "matches": [
+        "https://play.games.dmm.co.jp/game/pjivn_293854*"
+      ],
+      "css": [
+        "layout.css"
+      ],
       "run_at": "document_start",
       "all_frames": false
     }
-  ]
+  ],
+  "minimum_chrome_version": "106",
+  "permissions": [
+    "scripting",
+    "webNavigation",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://play.games.dmm.co.jp/*",
+    "https://iv-n-tight.saikyo.biz/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Moonlight cursor: click to pause/resume."
+  }
 }

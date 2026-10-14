@@ -18,6 +18,7 @@ Linux版は専用worktreeで、次の検査を実行します。Python標準ラ�
 
 ```bash
 python3 -m unittest discover -s tests -p 'test_linux_*.py' -v
+node --test tests/linux-cursor-extension.test.mjs
 git diff --check
 ```
 

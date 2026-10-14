@@ -13,7 +13,7 @@ UbuntuのGNOME Wayland上で、ダミープラグの画面をSunshineから配�
 
 Waylandではウィンドウ配置をデスクトップ側が決めるため、複数画面への自動配置は実装していません。リモートデスクトップなどで別の仮想画面が有効なら、本人がGNOME設定で配信用の1台だけにしてください。接続済みでも無効な画面は問題ありません。
 
-Linuxでの実ゲーム・拡張・全画面・タッチ・終了はまだ実機未検証です。Windowsでの受け入れ結果をLinuxの保証には使いません。[検証履歴](VERIFICATION.md)を参照してください。
+本人がLinuxのログイン・Moonlightアプリ一覧・ゲーム全画面表示を確認済みです。カーソル非表示・音声・タッチ・終了からの再起動は未確認です。Windowsでの受け入れ結果をLinuxの保証には使いません。[検証履歴](VERIFICATION.md)を参照してください。
 
 ## 初回準備
 
@@ -43,7 +43,7 @@ python3 launch-pjivn-linux.py doctor
 python3 launch-pjivn-linux.py setup
 ```
 
-4. 開いた**専用ブラウザー**で `chrome://extensions` を開き、本人がデベロッパーモードを有効にし、「パッケージ化されていない拡張機能を読み込む」から、運用リポジトリの `linux-extension` フォルダを選びます。この拡張は対象ゲームのトップページだけに表示CSSを適用します。内部iframe、他ゲーム、通常ブラウザーには適用しません。ゲーム内カーソルは隠しません。
+4. 開いた**専用ブラウザー**で `chrome://extensions` を開き、本人がデベロッパーモードを有効にし、「パッケージ化されていない拡張機能を読み込む」から、運用リポジトリの `linux-extension` フォルダを選びます。この拡張は対象ゲームのトップページに表示サイズ調整CSSを適用します。全画面では内部iframeのゲームcanvasにカーソル非表示CSSを追加し、通常ウィンドウではカーソルを表示します。他ゲームには適用しません。
 5. ゲームのタブへ戻って再読込みし、本人がログイン・必要なサイト権限の確認をします。表示CSSがログイン確認やエラー表示を見づらくする場合は、専用ブラウザーの拡張一覧で一時無効にして解決後に再度有効にしてください。
 6. 準備が済んだら専用ブラウザーの**全ウィンドウを閉じ**、コマンドが終了することを確認します。準備用ウィンドウを残したまま配信起動はできません。
 
@@ -93,3 +93,11 @@ Sunshineは同じデスクトップユーザーで実行し、Waylandのセッ�
 - 更新前に専用ブラウザーを終了します。mainの検証済みコミットに揃え、拡張を本人が再読込みして確認します。配置場所を移すと、拡張の読込み先・Sunshineコマンドも変わります。
 
 実装の根拠: [Sunshineのアプリ定義](https://docs.lizardbyte.dev/projects/sunshine/latest/md_docs_2getting__started.html)、[Chromeのcontent_scripts](https://developer.chrome.com/docs/extensions/reference/manifest/content-scripts)、[Chromeのload-extension変更](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ)。
+
+## カーソル非表示（1.2.0以降）
+
+既存の `pjivn Linux game layout` に組み込み済みです。専用プロファイルにだけ読み込んでください。対象ゲームが1タブ・1窓で開かれ、Chromeが全画面と判定した場合に、トップ→osapi→ゲームのframe構造を確認して内部の `canvas#unity-canvas` だけを隠します。遅れて生成されるcanvasにも同じCSSが効きます。ページ内容や認証ストレージは読みません。
+
+Sunshineの接続状態は判定しないため、設定用ウィンドウも手動で全画面にすれば対象です。全画面解除、別ページへの移動、拡張アイコンでのpauseで解除します。アイコンの `ON` は適用済み、`OFF` は一時停止、`?` は判定・解除保留、`ERR` はAPIエラーです。pauseはブラウザー再起動でリセットされます。黒い余白やブラウザーUI、Moonlight側で描画するポインターは対象外です。
+
+更新時はゲームを保存して専用ブラウザーを終了し、`setup` で開きます。`chrome://extensions` の既存拡張を再読込みし、追加のサイト権限（DMMの対象ホストとゲームホスト）を確認してください。ゲームページも再読込みした後、通常窓でカーソルが見えること、Moonlight起動でゲーム内カーソルが消えることを確認します。拡張の無効化・再読込み前はpauseして解除し、ゲームページも再読込みしてください。新たな拡張の追加や再ログインは原則不要です。

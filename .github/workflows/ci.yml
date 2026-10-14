@@ -50,7 +50,7 @@ jobs:
         run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify.ps1
 
       - name: Verify cursor extension logic
-        run: node --test .\tests\cursor-extension.test.mjs
+        run: node --test .\tests\cursor-extension.test.mjs .\tests\linux-cursor-extension.test.mjs
 
       - name: Verify cursor package generation
         run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\verify-cursor-package.ps1

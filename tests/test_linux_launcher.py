@@ -245,7 +245,7 @@ class LinuxLauncherTests(unittest.TestCase):
             manifest = json.loads((ROOT / directory / "manifest.json").read_text())
             self.assertEqual(manifest["version"], version)
         manifest = json.loads((ROOT / "linux-extension/manifest.json").read_text())
-        self.assertNotIn("permissions", manifest)
+        self.assertEqual(manifest["permissions"], ["scripting", "webNavigation", "storage", "alarms"])
         self.assertEqual(manifest["content_scripts"][0]["matches"], [helper.GAME_URL + "*"])
         self.assertFalse(manifest["content_scripts"][0]["all_frames"])
 

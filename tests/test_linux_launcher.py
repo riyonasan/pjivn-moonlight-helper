@@ -106,6 +106,41 @@ class LinuxLauncherTests(unittest.TestCase):
                 self.fail("browser lock accepted")
         self.assertTrue((owned / "browser-profile/SingletonLock").is_symlink())
 
+    def test_only_confirmed_dead_local_browser_lock_is_recoverable(self):
+        root = self.root / "stale"
+        with helper.profile_lock(root, setup=True) as profile:
+            lock = profile / "SingletonLock"
+            lock.symlink_to("mini-pc-2461736")
+            sample = profile / "user-file"
+            sample.write_text("preserve me")
+        with patch.object(helper.socket, "gethostname", return_value="mini-pc"), \
+             patch.object(helper.os, "kill", side_effect=ProcessLookupError) as probe:
+            with helper.profile_lock(root) as reopened:
+                self.assertEqual(reopened, profile)
+            probe.assert_called_once_with(2461736, 0)
+        self.assertEqual(os.readlink(lock), "mini-pc-2461736")
+        self.assertEqual(sample.read_text(), "preserve me")
+        for error in (None, PermissionError(), OSError()):
+            with patch.object(helper.socket, "gethostname", return_value="mini-pc"), \
+                 patch.object(helper.os, "kill", side_effect=error):
+                with self.assertRaises(helper.HelperError):
+                    with helper.profile_lock(root):
+                        self.fail("live or unknown lock accepted")
+        lock.unlink()  # Test fixture only, never a browser profile.
+        for target in ("other-pc-123", "mini-pc-0", "mini-pc--1", "mini-pc-invalid"):
+            lock.symlink_to(target)
+            with patch.object(helper.socket, "gethostname", return_value="mini-pc"), \
+                 patch.object(helper.os, "kill") as probe:
+                with self.assertRaises(helper.HelperError):
+                    helper.assert_browser_available(profile)
+                probe.assert_not_called()
+            self.assertEqual(os.readlink(lock), target)
+            lock.unlink()
+        lock.write_text("unknown file")
+        with self.assertRaises(helper.HelperError):
+            helper.assert_browser_available(profile)
+        self.assertEqual(lock.read_text(), "unknown file")
+
     def test_profile_must_be_prepared_and_never_symlinked(self):
         with self.assertRaises(helper.HelperError):
             with helper.profile_lock(self.root / "not-prepared"):

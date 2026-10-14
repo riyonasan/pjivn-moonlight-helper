@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -106,6 +107,28 @@ def diagnose(config):
     return select_display(current_displays(), config["DesktopOutput"])
 
 
+def assert_browser_available(profile):
+    singleton = profile / "SingletonLock"
+    message = "専用ブラウザーが使用中、またはロックの所有者を確認できません。専用窓を閉じてから確認してください。"
+    if not singleton.is_symlink():
+        if singleton.exists():
+            raise HelperError(message)
+        return
+    # Chromium uses a deliberately dangling hostname-PID link. Only a confirmed
+    # dead PID on this host is stale; let Chromium recover it without deleting it.
+    host, separator, pid_text = os.readlink(singleton).rpartition("-")
+    if (not separator or host != socket.gethostname() or not pid_text.isascii()
+            or not pid_text.isdecimal() or int(pid_text) <= 0):
+        raise HelperError(message)
+    try:
+        os.kill(int(pid_text), 0)
+    except ProcessLookupError:
+        return
+    except OSError as error:
+        raise HelperError(message) from error
+    raise HelperError(message)
+
+
 @contextlib.contextmanager
 def profile_lock(root, setup=False):
     root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -125,9 +148,7 @@ def profile_lock(root, setup=False):
             marker.write_text(PROFILE_MARKER, encoding="utf-8")
         if marker.read_text(encoding="utf-8") != PROFILE_MARKER or not profile.is_dir() or profile.is_symlink():
             raise HelperError("専用プロファイルの所有記録が一致しません。手動確認してください。")
-        singleton = profile / "SingletonLock"
-        if singleton.exists() or singleton.is_symlink():
-            raise HelperError("ブラウザーのロックが残っています。専用窓を閉じてください。強制終了・ロック削除は行いません。")
+        assert_browser_available(profile)
         yield profile
 
 

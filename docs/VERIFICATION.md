@@ -29,6 +29,12 @@ Windows PowerShell 5.1とNode.jsがこの作業環境にないため、既存Win
 
 その後、本人提供画像でChrome for Testing 151.0.7922.34の案内バーが上部に残ることを確認しました。配信起動runにだけ --disable-infobars を付ける修正を追加しています。インストール済みバイナリにも同スイッチ文字列が存在することを確認しましたが、文字列確認や起動引数検査は表示改善の証拠ではありません。修正後の帯の非表示と表示範囲・タッチ位置は、本人の再起動後確認待ちです。
 
+## 2026-10-14: 終了済みブラウザーのロックによる起動阻害
+
+本人からMoonlightのホスト側開始失敗画面が提供され、Sunshineログで2回のランチャー終了（code 256）を確認しました。画面のDRM文言だけではコンテンツ保護を原因と断定できません。doctorは合格し、専用ブラウザーのロックに記録されたPIDはホスト上に存在せず、同じ専用プロファイルを使うブラウザーもありませんでした。launcher.lockは取得可能でしたが、SingletonLockの存在だけで拒否する処理が起動阻害条件になっていました。
+
+原因・方針の独立レビュー後、同一ホスト・正のPIDに解析でき、存在確認でProcessLookupErrorとなる場合だけChromium本来の回復へ進む修正を加えました。生存中・別ホスト・権限不足・不明なロックは拒否します。ロックや認証データを削除しません。過去の終了がこのguardによるものだったか、ロック残存がSunshineの終了信号によるものだったかは本文ログがないため推測です。修正後のゲーム起動と終了→再起動は本人確認待ちです。
+
 ## ゲーム構造の読取りと手動全画面試験
 
 旧拡張READMEに2026-10-05の読取りとして記録された、実ページの二段iframeとUnity canvasの確認結果です。トップは `https://play.games.dmm.co.jp/game/pjivn_293854`、`iframe#game_frame` は `https://osapi.dmm.com/gadgets/ifr`、その下の `iframe#gameHTML5Canvas` は `https://iv-n-tight.saikyo.biz/app_data/` です。`canvas#unity-canvas` は1280×720で、通常時のinline/computed cursorは `default` でした。

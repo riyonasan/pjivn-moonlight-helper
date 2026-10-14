@@ -23,6 +23,12 @@ Python検査12件に合格しました。ダミープロセスでの終了伝達
 
 Windows PowerShell 5.1とNode.jsがこの作業環境にないため、既存Windowsの3検査はローカル未実施です。Windows CIを維持し、Linux検査を追加しています。Linuxでの拡張読込み、本人ログイン、全画面の実適用、音声・タッチ、Moonlight終了後のブラウザー終了・再起動は未確認です。[Linux受け入れ手順](LINUX.md)で別途確認します。
 
+## 2026-10-14: Linux初回設定と案内バーの修正
+
+本人が専用ブラウザーへのログイン成功を報告しました。Sunshine 2026.914.233613はapps.json直接更新後に一覧を自動再読込みしないため、配信待機状態を確認してサービスを再起動し、本人がMoonlight一覧へのゲーム表示を確認しました。配置コミット95fc464とバックアップはGit対象外の配置記録に残しています。
+
+その後、本人提供画像でChrome for Testing 151.0.7922.34の案内バーが上部に残ることを確認しました。配信起動runにだけ --disable-infobars を付ける修正を追加しています。インストール済みバイナリにも同スイッチ文字列が存在することを確認しましたが、文字列確認や起動引数検査は表示改善の証拠ではありません。修正後の帯の非表示と表示範囲・タッチ位置は、本人の再起動後確認待ちです。
+
 ## ゲーム構造の読取りと手動全画面試験
 
 旧拡張READMEに2026-10-05の読取りとして記録された、実ページの二段iframeとUnity canvasの確認結果です。トップは `https://play.games.dmm.co.jp/game/pjivn_293854`、`iframe#game_frame` は `https://osapi.dmm.com/gadgets/ifr`、その下の `iframe#gameHTML5Canvas` は `https://iv-n-tight.saikyo.biz/app_data/` です。`canvas#unity-canvas` は1280×720で、通常時のinline/computed cursorは `default` でした。

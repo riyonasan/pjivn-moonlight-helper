@@ -59,6 +59,8 @@ python3 launch-pjivn-linux.py run
 
 全画面でゲーム領域が表示され、タッチや入力が合うことを確認します。終了は専用ウィンドウを閉じるか、起動した端末で `Ctrl+C` を押してください。このランチャーが起動した子プロセスだけに通常終了を依頼します。ゲーム窓の目視確認をスクリプトによる成功判定と混同しないでください。
 
+Chrome for Testingを使う場合、画面上部のテスト版案内がゲーム領域を狭めるため、配信用の `run` に `--disable-infobars` を付けています。操作不要の案内バーを抑制するオプションで、初回設定用の `setup` には付けません。[Chromiumの説明](https://chromium.googlesource.com/chromium/src/+/main/docs/chrome_for_testing/)を参照してください。Chrome for Testingは自動更新されないため、ブラウザー本体の更新は別途必要です。
+
 Sunshineに登録するアプリのJSONを表示します。自動登録・既存アプリの書換えはしません。
 
 ```bash

@@ -136,7 +136,9 @@ def browser_arguments(config, profile, setup=False):
             "--ozone-platform=wayland", "--no-first-run", "--no-default-browser-check"]
     if setup:
         return args + ["--new-window", GAME_URL]
-    return args + ["--kiosk", "--new-window", GAME_URL]
+    # CfT's non-interactive banner otherwise consumes part of the game viewport.
+    # Keep setup unchanged so initial browser notices remain visible there.
+    return args + ["--kiosk", "--disable-infobars", "--new-window", GAME_URL]
 
 
 def supervise(args):

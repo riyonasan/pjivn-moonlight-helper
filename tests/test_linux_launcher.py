@@ -136,8 +136,10 @@ class LinuxLauncherTests(unittest.TestCase):
         self.assertEqual(app["prep-cmd"], [])
         args = helper.browser_arguments(self.config, self.root / "profile with spaces")
         self.assertIn("--kiosk", args)
+        self.assertIn("--disable-infobars", args)
         self.assertIn("--ozone-platform=wayland", args)
         self.assertNotIn("--kiosk", helper.browser_arguments(self.config, self.root, setup=True))
+        self.assertNotIn("--disable-infobars", helper.browser_arguments(self.config, self.root, setup=True))
         self.assertFalse(any("debugging" in arg or "no-sandbox" in arg for arg in args))
 
     def test_doctor_and_commands_do_not_launch_or_create_profile(self):

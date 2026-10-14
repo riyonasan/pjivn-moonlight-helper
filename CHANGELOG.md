@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Fixed（修正）
+
+- Linux版の配信起動時にChrome for Testingの案内バーがゲーム領域を狭める問題に対応し、`--disable-infobars` を追加。初回設定用の通常起動は維持。本体と両拡張の版を1.1.1に統一。
+
 ### Added（追加）
 
 - Ubuntu/GNOME WaylandのミニPC向けに、専用ブラウザーの通常起動・全画面起動、読取り専用診断、SunshineのアプリCommand生成を追加。Linuxでは配信終了時に専用ブラウザーを閉じます。
